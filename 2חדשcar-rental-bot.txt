@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Car Rental Search Bot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .hidden {
+            display: none;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen">
+    <div class="max-w-6xl mx-auto p-6">
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                </svg>
+                <h1 class="text-4xl font-bold text-gray-800">Global Car Rental Search</h1>
+            </div>
+            <p class="text-gray-600">Find the cheapest rental car easily - automatic price comparison worldwide</p>
+        </div>
+
+        <div class="flex gap-2 mb-6">
+            <button onclick="switchTab('search')" id="tab-search" class="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all bg-blue-600 text-white shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                New Search
+            </button>
+            <button onclick="switchTab('results')" id="tab-results" class="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all bg-white text-gray-600 hover:bg-gray-50">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+                Results (<span id="results-count">0</span>)
+            </button>
+            <button onclick="switchTab('history')" id="tab-history" class="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all bg-white text-gray-600 hover:bg-gray-50">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                History (<span id="history-count">0</span>)
+            </button>
+        </div>
+
+        <div id="search-section" class="bg-white rounded-2xl shadow-xl p-8 mb-6">
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="flex items-center gap-2 text-gray-700 font-semibold mb-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        Pick-up Date
+                    </label>
+                    <input type="date" id="pickup-date" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors">
+                </div>
+                
+                <div>
+                    <label class="flex items-center gap-2 text-gray-700 font-semibold mb-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        Return Date
+                    </label>
+                    <input type="date" id="return-date" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors">
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="flex items-center gap-2 text-gray-700 font-semibold mb-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        Pick-up Location
+                    </label>
+                    <input type="text" id="location" placeholder="e.g., JFK, LHR, BUD, or city name..." oninput="displayAirportName()" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors">
+                    <p class="text-xs text-gray-500 mt-1">Enter airport code (JFK, LHR) or city name</p>
+                </div>
+
+                <div>
+                    <label class="flex items-center gap-2 text-gray-700 font-semibold mb-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Currency
+                    </label>
+                    <select id="currency" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors">
+                        <option value="USD">USD ($)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="GBP">GBP (£)</option>
+                        <option value="AUD">AUD (A$)</option>
+                        <option value="CAD">CAD (C$)</option>
+                        <option value="JPY">JPY (¥)</option>
+                        <option value="AED">AED (د.إ)</option>
+                        <option value="CHF">CHF (Fr)</option>
+                        <option value="CNY">CNY (¥)</option>
+                        <option value="INR">INR (₹)</option>
+                        <option value="ILS">ILS (₪)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="flex items-center gap-2 text-gray-700 font-semibold mb-2">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                    Promo Code (Optional)
+                </label>
+                <input type="text" id="promo-code" placeholder="Enter promo code..." class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors">
+            </div>
+
+            <button onclick="handleSearch()" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-lg font-bold text-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                Search Available Cars
+            </button>
+
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                <p class="text-sm text-blue-800">
+                    💡 <strong>Tip:</strong> The bot compares prices from 12 leading global car rental companies and shows you the best deal!
+                </p>
+            </div>
+        </div>
+
+        <div id="results-section" class="hidden">
+            <div id="loading-spinner" class="hidden bg-white rounded-2xl shadow-xl p-12 text-center">
+                <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+                <p class="text-xl text-gray-600">Scanning all rental companies...</p>
+            </div>
+            <div id="results-list" class="space-y-4"></div>
+            <div id="no-results" class="hidden bg-white rounded-2xl shadow-xl p-12 text-center">
+                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                </svg>
+                <p class="text-xl text-gray-600">No search yet. Go to "New Search" tab to start!</p>
+            </div>
+        </div>
+
+        <div id="history-section" class="hidden">
+            <div id="history-list" class="space-y-4"></div>
+            <div id="no-history" class="bg-white rounded-2xl shadow-xl p-12 text-center">
+                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-xl text-gray-600">No search history yet</p>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
+            <h3 class="text-xl font-bold mb-3">🚀 How to upgrade to real scrapers?</h3>
+            <p class="mb-4">Currently the bot shows demo results. To get real-time prices, you can connect to:</p>
+            <ul class="space-y-2">
+                <li>• <strong>ScraperAPI</strong> - 1000 free requests per month</li>
+                <li>• <strong>Bright Data</strong> - Has a free plan</li>
+                <li>• <strong>Apify</strong> - Ready-made scrapers for car rentals</li>
+                <li>• <strong>RapidAPI</strong> - Car rental APIs from multiple providers</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const airportNames = {
+            'TLV': 'Tel Aviv Ben Gurion',
+            'JFK': 'New York JFK',
+            'EWR': 'Newark',
+            'LGA': 'New York LaGuardia',
+            'BUD': 'Budapest',
+            'LHR': 'London Heathrow',
+            'LGW': 'London Gatwick',
+            'CDG': 'Paris Charles de Gaulle',
+            'ORY': 'Paris Orly',
+            'FCO': 'Rome Fiumicino',
+            'BCN': 'Barcelona',
+            'MAD': 'Madrid',
+            'AMS': 'Amsterdam',
+            'FRA': 'Frankfurt',
+            'MUC': 'Munich',
+            'VIE': 'Vienna',
+            'ZRH': 'Zurich',
+            'ATH': 'Athens',
+            'IST': 'Istanbul',
+            'DXB': 'Dubai',
+            'DOH': 'Doha',
+            'AUH': 'Abu Dhabi',
+            'CAI': 'Cairo',
+            'JNB': 'Johannesburg',
+            'LAX': 'Los Angeles',
+            'SFO': 'San Francisco',
+            'ORD': 'Chicago O\'Hare',
+            'MIA': 'Miami',
+            'BOS': 'Boston',
+            'SEA': 'Seattle',
+            'DEN': 'Denver',
+            'ATL': 'Atlanta',
+            'DFW': 'Dallas Fort Worth',
+            'IAH': 'Houston',
+            'YYZ': 'Toronto',
+            'YVR': 'Vancouver',
+            'MEX': 'Mexico City',
+            'GRU': 'São Paulo',
+            'EZE': 'Buenos Aires',
+            'LIM': 'Lima',
+            'BOG': 'Bogotá',
+            'SCL': 'Santiago',
+            'SYD': 'Sydney',
+            'MEL': 'Melbourne',
+            'AKL': 'Auckland',
+            'NRT': 'Tokyo Narita',
+            'HND': 'Tokyo Haneda',
+            'ICN': 'Seoul Incheon',
+            'PEK': 'Beijing',
+            'PVG': 'Shanghai Pudong',
+            'HKG': 'Hong Kong',
+            'SIN': 'Singapore',
+            'BKK': 'Bangkok',
+            'KUL': 'Kuala Lumpur',
+            'DEL': 'New Delhi',
+            'BOM': 'Mumbai',
+            'JED': 'Jeddah',
+            'RUH': 'Riyadh',
+            'AMM': 'Amman',
+            'BEY': 'Beirut',
+            'PRG': 'Prague',
+            'WAW': 'Warsaw',
+            'BRU': 'Brussels',
+            'CPH': 'Copenhagen',
+            'ARN': 'Stockholm',
+            'OSL': 'Oslo',
+            'HEL': 'Helsinki',
+            'DUB': 'Dublin',
+            'LIS': 'Lisbon',
+            'OTP': 'Bucharest'
+        };
+
+        const currencySymbols = {
+            'USD': '$',
+            'EUR': '€',
+            'GBP': '£',
+            'AUD': 'A$',
+            'CAD': 'C$',
+            'JPY': '¥',
+            'AED': 'د.إ',
+            'CHF': 'Fr',
+            'CNY': '¥',
+            'INR': '₹',
+            'ILS': '₪'
+        };
+
+        const companies = [
+            { name: 'Enterprise', url: 'https://www.enterprise.com', color: 'bg-green-600' },
+            { name: 'Hertz', url: 'https://www.hertz.com', color: 'bg-yellow-500' },
+            { name: 'Avis', url: 'https://www.avis.com', color: 'bg-red-600' },
+            { name: 'Budget', url: 'https://www.budget.com', color: 'bg-orange-500' },
+            { name: 'Sixt', url: 'https://www.sixt.com', color: 'bg-orange-600' },
+            { name: 'Europcar', url: 'https://www.europcar.com', color: 'bg-blue-600' },
+            { name: 'Alamo', url: 'https://www.alamo.com', color: 'bg-teal-600' },
+            { name: 'National', url: 'https://www.nationalcar.com', color: 'bg-emerald-600' },
+            { name: 'Thrifty', url: 'https://www.thrifty.com', color: 'bg-blue-700' },
+            { name: 'Dollar', url: 'https://www.dollar.com', color: 'bg-indigo-600' },
+            { name: 'Payless', url: 'https://www.paylesscar.com', color: 'bg-purple-600' },
+            { name: 'Firefly', url: 'https://www.fireflycarrental.com', color: 'bg-pink-600' }
+        ];
+
+        const carTypes = ['Economy', 'Compact', 'Mid-size', 'Full-size', 'SUV', 'Luxury', 'Van'];
+        let searchHistory = [];
+        let currentResults = [];
+
+        function displayAirportName() {
+            const input = document.getElementById('location');
+            const value = input.value.toUpperCase();
+            
+            // Check if it's a 3-letter airport code
+            const words = value.split(/[\s,]+/);
+            const lastWord = words[words.length - 1];
+            
+            if (lastWord.length === 3 && airportNames[lastWord]) {
+                const label = input.previousElementSibling;
+                label.innerHTML = '<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> Pick-up Location <span class="text-green-600 font-normal">✓ ' + airportNames[lastWord] + '</span>';
+            } else {
+                const label = input.previousElementSibling;
+                label.innerHTML = '<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> Pick-up Location';
+            }
+        }
+
+        function switchTab(tab) {
+            document.getElementById('search-section').classList.add('hidden');
+            document.getElementById('results-section').classList.add('hidden');
+            document.getElementById('history-section').classList.add('hidden');
+
+            document.getElementById('tab-search').className = 'flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all bg-white text-gray-600 hover:bg-gray-50';
+            document.getElementById('tab-results').className = 'flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all bg-white text-gray-600 hover:bg-gray-50';
+            document.getElementById('tab-history').className = 'flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all bg-white text-gray-600 hover:bg-gray-50';
+
+            if (tab === 'search') {
+                document.getElementById('search-section').classList.remove('hidden');
+                document.getElementById('tab-search').className = 'flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all bg-blue-600 text-white shadow-lg';
+            } else if (tab === 'results') {
+                document.getElementById('results-section').classList.remove('hidden');
+                document.getElementById('tab-results').className = 'flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all bg-blue-600 text-white shadow-lg';
+                if (currentResults.length === 0) {
+                    document.getElementById('no-results').classList.remove('hidden');
+                }
+            } else if (tab === 'history') {
+                document.getElementById('history-section').classList.remove('hidden');
+                document.getElementById('tab-history').className = 'flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all bg-blue-600 text-white shadow-lg';
+            }
+        }
+
+        function generateMockResults(pickupDate, returnDate, promoCode, currency) {
+            const basePrice = 50 + Math.random() * 100;
+            const start = new Date(pickupDate);
+            const end = new Date(returnDate);
+            const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+
+            return companies.map((company, idx) => {
+                const priceVariation = (Math.random() - 0.5) * 40;
+                const dailyRate = basePrice + priceVariation + (idx * 8);
+                const totalPrice = dailyRate * days;
+                const discount = promoCode ? Math.floor(totalPrice * (0.05 + Math.random() * 0.15)) : 0;
+                const finalPrice = totalPrice - discount;
+
+                return {
+                    company: company.name,
+                    carType: carTypes[Math.floor(Math.random() * carTypes.length)],
+                    dailyRate: Math.round(dailyRate),
+                    totalPrice: Math.round(totalPrice),
+                    discount: Math.round(discount),
+                    finalPrice: Math.round(finalPrice),
+                    url: company.url,
+                    color: company.color,
+                    currency: currency,
+                    features: ['Full Insurance', 'Unlimited Mileage', 'Free Cancellation', 'GPS Included', '24/7 Support'].slice(0, Math.floor(Math.random() * 3) + 2)
+                };
+            }).sort((a, b) => a.finalPrice - b.finalPrice);
+        }
+
+        function handleSearch() {
+            const pickupDate = document.getElementById('pickup-date').value;
+            const returnDate = document.getElementById('return-date').value;
+            const location = document.getElementById('location').value;
+            const promoCode = document.getElementById('promo-code').value;
+            const currency = document.getElementById('currency').value;
+
+            if (!pickupDate || !returnDate || !location) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            switchTab('results');
+
+            document.getElementById('loading-spinner').classList.remove('hidden');
+            document.getElementById('results-list').innerHTML = '';
+            document.getElementById('no-results').classList.add('hidden');
+
+            setTimeout(() => {
+                currentResults = generateMockResults(pickupDate, returnDate, promoCode, currency);
+                displayResults(currentResults);
+                document.getElementById('loading-spinner').classList.add('hidden');
+                document.getElementById('results-count').textContent = currentResults.length;
+
+                const newSearch = {
+                    id: Date.now(),
+                    date: new Date().toLocaleString('en-US'),
+                    pickupDate: pickupDate,
+                    returnDate: returnDate,
+                    location: location,
+                    promoCode: promoCode,
+                    currency: currency,
+                    cheapest: currentResults[0]
+                };
+                searchHistory.unshift(newSearch);
+                searchHistory = searchHistory.slice(0, 10);
+                document.getElementById('history-count').textContent = searchHistory.length;
+                updateHistoryDisplay();
+            }, 2000);
+        }
+
+        function displayResults(results) {
+            const resultsList = document.getElementById('results-list');
+            resultsList.innerHTML = '';
+
+            const maxPrice = Math.max(...results.map(r => r.finalPrice));
+            const currencySymbol = currencySymbols[results[0].currency];
+
+            results.forEach((result, idx) => {
+                const isTop = idx === 0;
+                const savings = maxPrice - result.finalPrice;
+
+                const featuresHTML = result.features.map(f => 
+                    `<span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">${f}</span>`
+                ).join('');
+
+                const discountHTML = result.discount > 0 ? 
+                    `<div class="mb-2"><span class="text-gray-400 line-through text-sm">${currencySymbol}${result.totalPrice}</span>
+                    <span class="ml-2 text-green-600 font-semibold text-sm">Save ${currencySymbol}${result.discount}</span></div>` : '';
+
+                const topBadgeHTML = isTop ? 
+                    `<div class="mt-4 bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    <span class="text-green-800 font-semibold">🎉 Best Price! Save up to ${currencySymbol}${savings}</span></div>` : '';
+
+                const resultHTML = 
+                    `<div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all p-6 border-2 ${isTop ? 'border-green-400 ring-4 ring-green-100' : 'border-gray-100'}">
+                    <div class="flex items-center justify-between flex-wrap gap-4">
+                    <div class="flex items-center gap-4">
+                    <div class="${result.color} w-16 h-16 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                    ${result.company.charAt(0)}</div>
+                    <div><h3 class="text-xl font-bold text-gray-800 mb-1">${result.company}</h3>
+                    <p class="text-gray-600">${result.carType} • ${currencySymbol}${result.dailyRate}/day</p>
+                    <div class="flex gap-2 mt-2 flex-wrap">${featuresHTML}</div></div></div>
+                    <div class="text-center">${discountHTML}
+                    <div class="text-3xl font-bold text-gray-800">${currencySymbol}${result.finalPrice}</div>
+                    <div class="text-sm text-gray-500">Total Price</div></div>
+                    <a href="${result.url}" target="_blank" rel="noopener noreferrer" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 shadow-lg hover:shadow-xl">
+                    Book Now<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>
+                    </div>${topBadgeHTML}</div>`;
+                
+                resultsList.innerHTML += resultHTML;
+            });
+        }
+
+        function updateHistoryDisplay() {
+            const historyList = document.getElementById('history-list');
+            const noHistory = document.getElementById('no-history');
+
+            if (searchHistory.length === 0) {
+                noHistory.classList.remove('hidden');
+                historyList.innerHTML = '';
+                return;
+            }
+
+            noHistory.classList.add('hidden');
+            historyList.innerHTML = searchHistory.map(item => {
+                const currencySymbol = currencySymbols[item.currency];
+                return `<div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-3">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="text-sm text-gray-500">${item.date}</span></div>
+                    <div class="grid md:grid-cols-3 gap-4 text-sm">
+                    <div><span class="text-gray-500">Dates:</span>
+                    <span class="font-semibold ml-2">${item.pickupDate} - ${item.returnDate}</span></div>
+                    <div><span class="text-gray-500">Location:</span>
+                    <span class="font-semibold ml-2">${item.location}</span></div>
+                    <div><span class="text-gray-500">Cheapest:</span>
+                    <span class="font-semibold ml-2 text-green-600">${item.cheapest.company} - ${currencySymbol}${item.cheapest.finalPrice}</span></div>
+                    </div></div>
+                    <div class="flex gap-2">
+                    <button onclick="loadFromHistory(${item.id})" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg transition-colors">Load</button>
+                    <button onclick="deleteHistory(${item.id})" class="bg-red-100 hover:bg-red-200 text-red-700 p-2 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button></div></div></div>`;
+            }).join('');
+        }
+
+        function loadFromHistory(id) {
+            const item = searchHistory.find(h => h.id === id);
+            if (item) {
+                document.getElementById('pickup-date').value = item.pickupDate;
+                document.getElementById('return-date').value = item.returnDate;
+                document.getElementById('location').value = item.location;
+                document.getElementById('promo-code').value = item.promoCode || '';
+                document.getElementById('currency').value = item.currency;
+                switchTab('search');
+            }
+        }
+
+        function deleteHistory(id) {
+            searchHistory = searchHistory.filter(h => h.id !== id);
+            document.getElementById('history-count').textContent = searchHistory.length;
+            updateHistoryDisplay();
+        }
